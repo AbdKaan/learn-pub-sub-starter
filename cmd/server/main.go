@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 )
 
 func main() {
@@ -21,11 +22,27 @@ func main() {
 		)
 	}
 	defer conn.Close()
-	fmt.Println("Connection was successful!")
+	fmt.Println("Peril game server connected to RabbitMQ!")
 
-	// wait for ctrl+c
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	<-signalChan
-	fmt.Println("RabbitMQ connection closed.")
+	// Create new channel
+	publishCh, err := conn.Channel()
+	if err != nil {
+		log.Fatalf(
+			"Error occured while creating a channel: %v",
+			err,
+		)
+	}
+
+	err = pubsub.PublishJSON(
+		publishCh,
+		routing.ExchangePerilDirect,
+		routing.PauseKey,
+		routing.PlayingState{IsPaused: true},
+	)
+	if err != nil {
+		log.Fatalf(
+			"Error occured while publishing the message: %v",
+			err,
+		)
+	}
 }
