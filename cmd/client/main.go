@@ -28,29 +28,29 @@ func main() {
 		log.Fatalf("Error occured: %v", err)
 	}
 
-	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, username)
-	/*
-		_, queue, err := pubsub.DeclareAndBind(
-			conn,
-			routing.ExchangePerilDirect,
-			queueName,
-			routing.PauseKey,
-			pubsub.SimpleQueueTransient,
-		)
-		if err != nil {
-			log.Fatalf("could not subscribe to pause: %v", err)
-		}
-		fmt.Printf("Queue %v declared and bound!\n", queue.Name)
-	*/
-
 	gameState := gamelogic.NewGameState(username)
+
+	// Subscribe to pause queue
 	err = pubsub.SubscribeJSON(
 		conn,
 		routing.ExchangePerilDirect,
-		queueName,
+		routing.PauseKey+"."+gameState.GetUsername(),
 		routing.PauseKey,
 		pubsub.SimpleQueueTransient,
 		handlerPause(gameState),
+	)
+	if err != nil {
+		log.Fatalf("could not subscribe to pause: %v", err)
+	}
+
+	// Subscribe to army_moves queue
+	err = pubsub.SubscribeJSON(
+		conn,
+		routing.ExchangePerilTopic,
+		routing.ArmyMovesPrefix+"."+gameState.GetUsername(),
+		routing.ArmyMovesPrefix+".*",
+		pubsub.SimpleQueueTransient,
+		handlerMove(gameState),
 	)
 	if err != nil {
 		log.Fatalf("could not subscribe to pause: %v", err)
@@ -75,6 +75,24 @@ func main() {
 				fmt.Printf("Error occured: %v", err)
 				continue
 			}
+
+			ch, err := conn.Channel()
+			if err != nil {
+				fmt.Printf("Error occured: %v", err)
+				continue
+			}
+
+			err = pubsub.PublishJSON(
+				ch,
+				routing.ExchangePerilTopic,
+				routing.ArmyMovesPrefix+"."+gameState.GetUsername(),
+				mv,
+			)
+			if err != nil {
+				fmt.Printf("Error occured: %v", err)
+				continue
+			}
+
 			fmt.Printf("Move completed!\n %v", mv)
 		case "status":
 			gameState.CommandStatus()
