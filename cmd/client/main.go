@@ -91,8 +91,6 @@ func main() {
 				fmt.Printf("Error occured: %v", err)
 				continue
 			}
-
-			fmt.Printf("Moved %v units to %s\n", len(mv.Units), mv.ToLocation)
 		case "status":
 			gameState.CommandStatus()
 		case "help":
