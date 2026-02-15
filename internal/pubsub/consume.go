@@ -96,7 +96,14 @@ func DeclareAndBind(
 		log.Fatal("Queue needs to be durable or transient")
 	}
 
-	queue, err := channel.QueueDeclare(queueName, durable, autoDelete, exclusive, false, nil)
+	queue, err := channel.QueueDeclare(
+		queueName,
+		durable,
+		autoDelete,
+		exclusive,
+		false,
+		amqp.Table{"x-dead-letter-exchange": "peril_dlx"},
+	)
 	if err != nil {
 		return nil, amqp.Queue{}, err
 	}
