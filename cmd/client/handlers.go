@@ -43,9 +43,9 @@ func handlerMove(
 			)
 			if err != nil {
 				fmt.Printf("Couldn't publish message: %v", err)
-				return pubsub.NackDiscard
+				return pubsub.NackRequeue
 			}
-			return pubsub.NackRequeue
+			return pubsub.Ack
 		}
 		fmt.Println("error: unknown move outcome")
 		return pubsub.NackDiscard

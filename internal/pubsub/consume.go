@@ -58,13 +58,10 @@ func SubscribeJSON[T any](conn *amqp.Connection,
 			ack := handler(target)
 			switch ack {
 			case Ack:
-				fmt.Println("Acking...")
 				msg.Ack(false)
 			case NackRequeue:
-				fmt.Println("Nacking and requeueing...")
 				msg.Nack(false, true)
 			case NackDiscard:
-				fmt.Println("Nacking and discarding...")
 				msg.Nack(false, false)
 			}
 		}
