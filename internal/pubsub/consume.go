@@ -39,6 +39,12 @@ func subscribe[T any](
 		return fmt.Errorf("could not declare and bind queue: %v\n", err)
 	}
 
+	// Each client prefatches 10 messages
+	err = ch.Qos(10, 0, false)
+	if err != nil {
+		return fmt.Errorf("could not create QoS: %v\n", err)
+	}
+
 	// Consumer name is empty string so it will be auto generated
 	msgs, err := ch.Consume(queue.Name, "", false, false, false, false, nil)
 	if err != nil {
