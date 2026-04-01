@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -98,11 +99,11 @@ func main() {
 			err = pubsub.PublishJSON(
 				publishCh,
 				routing.ExchangePerilTopic,
-				routing.ArmyMovesPrefix+"."+mv.Player.Username,
+				routing.ArmyMovesPrefix+"."+username,
 				mv,
 			)
 			if err != nil {
-				fmt.Printf("Error occured: %v", err)
+				fmt.Printf("Error occured: %v\n", err)
 				continue
 			}
 		case "status":
@@ -110,7 +111,26 @@ func main() {
 		case "help":
 			gamelogic.PrintClientHelp()
 		case "spam":
-			fmt.Println("Spamming not allowed yet!")
+			if len(words) < 2 {
+				fmt.Printf("Not enough arguments. Command is: 'spam <number>'\n")
+				continue
+			}
+			n, err := strconv.Atoi(words[1])
+			if err != nil {
+				fmt.Printf(
+					"Couldn't convert the second argument <number> into a number. Make sure to provide a number.\n",
+				)
+				continue
+			}
+			for i := 1; i < n; i++ {
+				maliciousLog := gamelogic.GetMaliciousLog()
+				err := publishGameLog(publishCh, gameState.GetUsername(), maliciousLog)
+				if err != nil {
+					fmt.Printf("Couldn't publish game log: %v\n", err)
+					continue
+				}
+				fmt.Printf("Published %v malicious logs\n", n)
+			}
 		case "quit":
 			gamelogic.PrintQuit()
 			return
